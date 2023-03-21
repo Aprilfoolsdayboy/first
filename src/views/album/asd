@@ -1,0 +1,19 @@
+"data":{
+"albumInfo":{
+"albumName":"";
+"publishDate":"";
+"country":"";
+"introduce":"";
+"albumImg":"";
+},
+"musicList": [
+{
+ "name":"";
+ "isTitle":"";
+ "order":"";
+ "genre":"";
+ "album":"";
+ "file":"";
+}
+]
+}

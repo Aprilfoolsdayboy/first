@@ -1,0 +1,177 @@
+<template>
+    <!-- HTML -->
+  <h1>장르 정보</h1>
+  <!-- <p>{{ msg }}</p> -->
+  <!-- v-bind 뷰 최초 로드 시 값 설정만 된다. -->
+  <!-- a, ing 등 URL 들어가는 부분 -->
+  <!-- <button @click="changeMsg">변경</button> -->
+  <!-- v-model :  뷰 최초 로드 시 값 설정 & 변수와 동기화 -->
+  <!-- 대부분 input에 적용 -->
+  <!-- <input type="text" v-model="mymsg">
+  <input type="checkbox" v-model="chk" id="areashow">
+  <label for="areashow">area 보이기</label>
+  <p>{{ mymsg }}</p>
+  <p>{{ chk }}</p> -->
+  <!-- v-if 안쪽 값이 true 이거나, 연산결과가 true 일 때만 화면에 보여줌 -->
+  <!-- <div id="area" v-if="chk">
+    <p>Area 보이기</p>
+  </div>
+  <input type="text" v-model="inputValue">
+  <button @click="addToList()">리스트에 추가</button>
+  <div id="contents">
+  <p v-for="n in list" :key="n">{{ n }}</p>
+  </div>
+  <MyComp /> -->
+  <div id="genre_list_area">
+    <table>
+      <thead>
+        <tr>
+          <th>번호</th>
+          <th>장르명</th>
+          <th><button @click="addGenre()">장르 추가</button></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="item in list" :key="item.genreSeq">
+          <td>{{ item.genreSeq }}</td>
+          <td><button class="genre_name" @click="gnereDetail(item.genreSeq)">{{ item.genreName }}</button>
+          </td>
+          <td>
+            <button @click="deleteGenre(item.genreSeq)">삭제</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="search_area">
+      <input type="text" v-model="keyword">
+      <button @click="search()">검색</button>
+    </div>
+    <div class="pager_area">
+      <button class="pager" v-for="p in totalPage" :key="p" @click="pagerClick(p-1)">{{ p }}</button>
+    </div>
+  </div>
+  <GenrePopup :mode="popupMode" :genre="selected" v-if="popup" @closePopup="closePopup()"/>
+  </template>
+  
+  <script>
+  // import MyComp from "./components/MyComp.vue"
+  // JavaScript
+  // import axios from "axios"
+  import GenrePopup from "@/components/GenrePopup.vue";
+  export default {
+    name: 'GenreView',
+    components:{
+      GenrePopup
+    },
+    data(){
+      return{
+        list:null,
+        currentPage:0,
+        keyword:"",
+        totalPage:0,
+        popup:false,
+        popupMode:"add",
+        selected:null
+      }
+    },
+    created(){console.log("created()");
+    this.loadGenreList()
+  },
+  methods:{
+    loadGenreList(){
+      this.$http.get("/api/genre/list",{
+        params:{
+          page:this.currentPage,
+          keyword:this.keyword
+        }
+      })
+    .then((e)=>{
+      this.list = e.data.list;
+      this.totalPage = e.data.totalPage;
+    })
+    },
+    deleteGenre(seq){
+      if(!confirm("삭제하시겠습니까?\n 삭제된 데이터는 되돌릴 수 없습니다.")) return
+      this.$http.delete("/api/genre/delete?genre_no="+seq)
+      .then((r)=>{
+        alert(r.data.message)
+        location.reload()
+      })
+    },
+    gnereDetail(seq){
+      this.popup = true
+      // list에 있는 요소들을 순차적으로 조회하면서, genreSeq 값이 파라미터의 seq 값과 일치하는 것만
+      // 걸러 낸 새로운 리스트를 만들어서 selected에 지정한다.
+      // this.no = seq;
+      this.selected= this.list.filter((genre) => genre.genreSeq == seq)[0] // 결과 중 두번째 것만 가져옴.
+      this.popupMode = "update"
+      console.log(this.list)
+      console.log(this.selected, seq)
+    },
+    pagerClick(page){
+      this.currentPage = page;
+      this.loadGenreList();
+      },
+      search(){
+        this.currentPage = 0;
+        this.loadGenreList();
+      },
+      addGenre(){
+        this.popup = true;
+        this.popupMode = "add"
+      },
+      closePopup(){
+        this.popup = false;
+        this.selected = null;
+      }
+    },
+    watch: {
+      // data - currentPage의 값이 변경되었을 때만 실행
+      // 같은 값을 세팅했을 경우에는 실행되지 않는다.
+      currentPage(value, oldvalue){
+        // value - 변경된 값, oldvalue - 변경 전 값
+        console.log("watch - currentPage");
+        this.loadGenreList()
+    }
+  }
+    // activated(){console.log("activated()");},
+    // beforeCreate(){console.log("beforeCreate()");},
+    // beforeMount(){console.log("beforeMount()");},
+    // beforeUnmount(){console.log("beforeUnmount()");},
+    // beforeUpdate(){console.log("beforeUpdate()");},
+    // deactivated(){console.log("deactivated()");},
+    // mounted(){console.log("mounted()");},
+    // unmounted(){console.log("unmounted()");},
+    // updated(){console.log("updated()");}
+  
+    // components:{MyComp},
+    // data(){
+      // return {
+        // inputValue:"",
+        // "msg":"첫 번째 프로젝트",
+        // mymsg:"힝",
+        // chk:true,
+        // list:[1,2,3,4,5,6,7,8,9,10]
+      // }
+    // },
+    // methods: {
+      // changeMsg(){
+        // this.msg = "버튼을 눌렀다."
+      // },
+      // addToList(){
+        // if(this.inputValue == ""){
+          // alert("빈 값은 입력할 수 없습니다.")
+          // return;
+        // }
+        // this.list.push(this.inputValue)
+        // this.inputValue = ""
+      // }
+    // }
+  }
+  </script>
+  
+  <style>
+  /* css */
+  /* #area {background-color: rgb(255, 201, 212); width: 300px; height: 100px;} */
+  </style>
+  
